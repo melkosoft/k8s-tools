@@ -1,0 +1,25 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: utils
+  namespace: tools
+  labels:
+    app: utils
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: utils
+  template:
+    metadata:
+      labels:
+        app: utils
+    spec:
+      containers:
+        - name: utils
+          image: IMAGE_URL:IMAGE_TAG
+          command: ["sleep"]
+          args: ["1d"]
+      imagePullSecrets:
+        - name: registrypullsecret

@@ -1,0 +1,54 @@
+pipeline {
+  agent { label 'ssh-docker'  }
+  environment {
+    registry = "${env.REGISTRY}"
+    repo = "k8s-tools/k8s-utils"
+    tag = sh(script: 'git log -1 --pretty=%h', returnStdout: true).trim()
+  }
+  stages {
+    stage("Docker Login") {
+      steps {
+        container('kube') {
+          withCredentials([usernamePassword(credentialsId: 'harbor.imm', usernameVariable: "REPO_USER", passwordVariable: "REPO_PWD")]) {
+            sh "echo $REPO_PWD | docker login --username 'robot\$docker-robot' --password-stdin ${env.registry}"
+          }
+        }
+      }
+    }
+    stage("Build Docker Image") {
+      steps {
+        container('kube') {
+          sh "docker build -t ${env.registry}/${env.repo}:${env.tag} ."
+        }
+      }
+    } 
+    stage("Security check of image") {
+      steps {
+        container('kube') {
+          aquaMicroscanner imageName: "${env.registry}/${env.repo}:${env.tag}", notCompliesCmd: 'exit 4', onDisallowed: 'fail', outputFormat: 'html' 
+        }
+      }
+    }
+    stage("Push Docker Image to Repo") {
+      steps {
+        container('kube') {
+          sh "docker push ${env.registry}/${env.repo}:${env.tag}"
+        }
+      }
+    }
+    stage("Deploy to Kubernetes") {
+      steps { 
+        container('kube') {
+          withCredentials( [[ $class: 'FileBinding',
+                credentialsId: 'kubeconfig',
+                variable: 'KUBECONFIG']]){
+            sh "sed -i 's#IMAGE_URL#${env.registry}/${env.repo}#g; s#IMAGE_TAG#${env.tag}#g' ./k8s-deployment.yaml"
+            sh "cat ./k8s-deployment.yaml"
+            sh "env"
+            sh "kubectl apply -f ./k8s-deployment.yaml"
+          }
+        }
+      }
+    }
+  }
+}
