@@ -50,7 +50,7 @@ spec:
         TAG = sh(script: 'cat $WORKSPACE/git_commit_short', returnStdout: true).trim()
       }
       steps {
-           sh "/kaniko/executor -f `pwd`/Dockerfile -c `pwd` --insecure --skip-tls-verify --cache=false --destination=${env.REGISTRY}/${env.REPO}:${env.TAG}"
+           sh "/kaniko/executor -f `pwd`/Dockerfile -c `pwd` --insecure --skip-tls-verify --cache=false --destination=${env.DOCKER_REGISTRY}/${env.REPO}:${env.TAG}"
       }
     }
   }
