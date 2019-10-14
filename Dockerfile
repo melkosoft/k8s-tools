@@ -5,7 +5,7 @@ RUN \
 
 FROM alpine:3.9
 RUN \
-  apk update && apk add --no-cache --update openssh-client gzip rsync curl bind-tools tcpdump mailx \
+  apk update && apk add --no-cache --update openssh-client gzip rsync curl bind-tools tcpdump mailx groff \
   mysql-client mongodb-tools postgresql-client \
   busybox busybox-extras grep bash jq git iputils netcat-openbsd nmap \
   vim python py-pip \
